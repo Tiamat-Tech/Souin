@@ -38,6 +38,8 @@ type DefaultCache struct {
 	Redis configurationtypes.CacheProvider `json:"redis"`
 	// Etcd provider configuration.
 	Etcd configurationtypes.CacheProvider `json:"etcd"`
+	// Nats provider configuration.
+	Nats configurationtypes.CacheProvider `json:"nats"`
 	// NutsDB provider configuration.
 	Nuts configurationtypes.CacheProvider `json:"nuts"`
 	// Otter provider configuration.
@@ -99,6 +101,11 @@ func (d *DefaultCache) GetEtcd() configurationtypes.CacheProvider {
 // GetMode returns mdoe configuration
 func (d *DefaultCache) GetMode() string {
 	return d.Mode
+}
+
+// GetNats returns nuts configuration
+func (d *DefaultCache) GetNats() configurationtypes.CacheProvider {
+	return d.Nats
 }
 
 // GetNuts returns nuts configuration
@@ -357,7 +364,7 @@ func parseConfiguration(cfg *Configuration, h *caddyfile.Dispenser, isGlobal boo
 				}
 				cfg.API = apiConfiguration
 			case "badger":
-				provider := configurationtypes.CacheProvider{}
+				provider := configurationtypes.CacheProvider{Found: true}
 				for nesting := h.Nesting(); h.NextBlock(nesting); {
 					directive := h.Val()
 					switch directive {
@@ -454,7 +461,7 @@ func parseConfiguration(cfg *Configuration, h *caddyfile.Dispenser, isGlobal boo
 				}
 			case "etcd":
 				cfg.DefaultCache.Distributed = true
-				provider := configurationtypes.CacheProvider{}
+				provider := configurationtypes.CacheProvider{Found: true}
 				for nesting := h.Nesting(); h.NextBlock(nesting); {
 					directive := h.Val()
 					switch directive {
@@ -504,8 +511,23 @@ func parseConfiguration(cfg *Configuration, h *caddyfile.Dispenser, isGlobal boo
 					return h.Errf("mode must contains only one arg: %s given", args)
 				}
 				cfg.DefaultCache.Mode = args[0]
+			case "nats":
+				provider := configurationtypes.CacheProvider{Found: true}
+				for nesting := h.Nesting(); h.NextBlock(nesting); {
+					directive := h.Val()
+					switch directive {
+					case "url":
+						urlArgs := h.RemainingArgs()
+						provider.URL = urlArgs[0]
+					case "configuration":
+						provider.Configuration = parseCaddyfileRecursively(h)
+					default:
+						return h.Errf("unsupported nats directive: %s", directive)
+					}
+				}
+				cfg.DefaultCache.Nuts = provider
 			case "nuts":
-				provider := configurationtypes.CacheProvider{}
+				provider := configurationtypes.CacheProvider{Found: true}
 				for nesting := h.Nesting(); h.NextBlock(nesting); {
 					directive := h.Val()
 					switch directive {
@@ -523,7 +545,7 @@ func parseConfiguration(cfg *Configuration, h *caddyfile.Dispenser, isGlobal boo
 				}
 				cfg.DefaultCache.Nuts = provider
 			case "otter":
-				provider := configurationtypes.CacheProvider{}
+				provider := configurationtypes.CacheProvider{Found: true}
 				for nesting := h.Nesting(); h.NextBlock(nesting); {
 					directive := h.Val()
 					switch directive {
@@ -536,7 +558,7 @@ func parseConfiguration(cfg *Configuration, h *caddyfile.Dispenser, isGlobal boo
 				cfg.DefaultCache.Otter = provider
 			case "olric":
 				cfg.DefaultCache.Distributed = true
-				provider := configurationtypes.CacheProvider{}
+				provider := configurationtypes.CacheProvider{Found: true}
 				for nesting := h.Nesting(); h.NextBlock(nesting); {
 					directive := h.Val()
 					switch directive {
@@ -555,7 +577,7 @@ func parseConfiguration(cfg *Configuration, h *caddyfile.Dispenser, isGlobal boo
 				cfg.DefaultCache.Olric = provider
 			case "redis":
 				cfg.DefaultCache.Distributed = true
-				provider := configurationtypes.CacheProvider{}
+				provider := configurationtypes.CacheProvider{Found: true}
 				for nesting := h.Nesting(); h.NextBlock(nesting); {
 					directive := h.Val()
 					switch directive {

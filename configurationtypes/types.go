@@ -184,6 +184,10 @@ type URL struct {
 
 // CacheProvider config
 type CacheProvider struct {
+	// Uuid to identify a unique instance.
+	Uuid string
+	// Found to determine if we can use that storage.
+	Found bool `json:"found" yaml:"found"`
 	// URL to connect to the storage system.
 	URL string `json:"url" yaml:"url"`
 	// Path to the configuration file.
@@ -235,6 +239,7 @@ type DefaultCache struct {
 	Key                 Key           `json:"key" yaml:"key"`
 	Etcd                CacheProvider `json:"etcd" yaml:"etcd"`
 	Mode                string        `json:"mode" yaml:"mode"`
+	Nats                CacheProvider `json:"nats" yaml:"nats"`
 	Nuts                CacheProvider `json:"nuts" yaml:"nuts"`
 	Olric               CacheProvider `json:"olric" yaml:"olric"`
 	Otter               CacheProvider `json:"otter" yaml:"otter"`
@@ -293,6 +298,11 @@ func (d *DefaultCache) GetEtcd() CacheProvider {
 // GetMode returns mode configuration
 func (d *DefaultCache) GetMode() string {
 	return d.Mode
+}
+
+// GetNats returns nuts configuration
+func (d *DefaultCache) GetNats() CacheProvider {
+	return d.Nats
 }
 
 // GetNuts returns nuts configuration
@@ -365,6 +375,7 @@ type DefaultCacheInterface interface {
 	GetEtcd() CacheProvider
 	GetMode() string
 	GetOtter() CacheProvider
+	GetNats() CacheProvider
 	GetNuts() CacheProvider
 	GetOlric() CacheProvider
 	GetRedis() CacheProvider
